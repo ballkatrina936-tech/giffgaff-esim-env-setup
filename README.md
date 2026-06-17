@@ -1,109 +1,120 @@
-# giffgaff eSIM 环境自动化工具
+# giffgaff eSIM 环境一键配置工具
 
-这个工具用于在 Windows + MuMu 5 模拟器里自动配置 giffgaff eSIM 所需环境：MuMu root、Kitsune Mask/Magisk、Zygisk、LSPosed、HookEuicc、giffgaff App。
+在 Windows + MuMu 5 模拟器中自动搭建 giffgaff eSIM 环境：Root → Kitsune Mask → Zygisk → LSPosed → HookEuicc → giffgaff 登录页。
 
-脚本只会自动做到 giffgaff 登录页。账号密码、验证码、付款、地址、eSIM 购买和最终提交都需要你自己手动完成。
+**脚本自动执行到 giffgaff 登录页为止**，之后的账号登录、验证码、付款、eSIM 购买由用户手动完成。
 
-## 适合谁
+---
 
-- 想低成本准备 giffgaff 海外手机号/eSIM 环境的用户
-- 不熟悉 MuMu、Magisk、LSPosed、ADB 的普通用户
-- 想把教程步骤减少到“一键配置 + 自己登录”的用户
+## 快速开始
 
-## 重要提醒
+### 方式一：双击启动（推荐新手）
 
-- 第一版只支持 Windows + MuMu 5。
-- 不支持雷电、夜神、蓝叠等其他模拟器。
-- 强烈建议新建一个干净 MuMu 实例运行脚本，不要直接操作你日常使用的主实例。
-- 脚本会修改指定 MuMu 实例的 root 和系统盘可写设置。
-- 不会记录、读取、上传你的账号密码或验证码。
-- 不会代替你付款、购买套餐、提交 eSIM 申请。
+1. 下载本项目（Clone 或 Download ZIP）
+2. 双击 `start.bat`
+3. 跟着中文引导操作即可
 
-## 工具包下载
+### 方式二：配合 AI Agent 使用（推荐进阶用户）
 
-请新建一个工具包目录，例如：
+如果你使用 Trae、CodeBuddy、Cursor 等 AI 编程助手，直接对 Agent 说：
 
-```powershell
-C:\giffgaff_tools
-```
+> "帮我克隆 https://github.com/ballkatrina936-tech/giffgaff-esim-env-setup 并运行 giffgaff eSIM 环境配置脚本，用 VM 1 实例"
 
-把下面文件下载到这个目录。
+Agent 会自动：
+1. 克隆仓库
+2. 检测 MuMu 安装位置
+3. 自动下载工具包（HookEuicc、LSPosed、Via）
+4. 引导你手动下载 giffgaff APK 和 Kitsune Mask
+5. 运行配置脚本
 
-脚本可以自动下载：
-
-- LSPosed  
-  https://github.com/LSPosed/LSPosed/releases/download/v1.9.2/LSPosed-v1.9.2-7024-zygisk-release.zip
-- Via 浏览器  
-  https://res.viayoo.com/v1/via-release.apk
-
-需要你手动下载：
-
-- MuMu 模拟器  
-  https://www.mumuplayer.com/download/
-- HookEuicc  
-  https://github.com/Unicorn369/HookEuicc
-- giffgaff APK  
-  https://mi9.com/package/com.giffgaffmobile.controller/download/
-- Kitsune Mask 备份  
-  https://mega.nz/file/DEUVTRBA#lGEogAthS3kt2YuCmi0kszwPuFV4KI0o3-hApgdBxEw
-
-Kitsune Mask 说明：原项目页面已失效，这里只放备份链接，仅供学习交流使用。请自行判断来源可信度。
-
-## 文件名要求
-
-工具包目录中至少需要能匹配到这些文件：
-
-```text
-HookEuicc*.apk
-giffgaff*.apk
-Kitsune*.apk 或 *Mask*.apk
-LSPosed-v1.9.2-7024-zygisk-release.zip
-via-release.apk 或 Via*.apk
-```
-
-如果 LSPosed 或 Via 不存在，脚本会尝试自动下载。
-
-## 使用方法
-
-1. 安装 MuMu 模拟器 5。
-2. 打开 MuMu 多开器，新建一个干净实例。
-3. 启动新实例一次，确认能进入桌面，然后关闭或保持打开都可以。
-4. 准备工具包目录，例如 `C:\giffgaff_tools`。
-5. 右键 PowerShell，选择“以管理员身份运行”。
-6. 进入脚本所在目录。
-7. 用新实例编号运行。新建的第二个实例通常是 `1`：
+### 方式三：PowerShell 命令行
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\setup-giffgaff-env.ps1 -ToolDir C:\giffgaff_tools -VmIndex 1
+# 交互式（推荐）
+powershell -ExecutionPolicy Bypass -File .\setup-giffgaff-env.ps1
+
+# 非交互式（适合 Agent 调用）
+powershell -ExecutionPolicy Bypass -File .\setup-giffgaff-env.ps1 -NonInteractive -VmIndex 1 -ToolDir "C:\giffgaff_tools"
 ```
 
-如果你的新实例编号不是 `1`，请把 `-VmIndex 1` 改成对应编号。主实例通常是 `0`，不建议用于第一次测试。
+---
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\setup-giffgaff-env.ps1 -ToolDir C:\giffgaff_tools -VmIndex 2
+## 前置条件
+
+| 条件 | 说明 |
+|------|------|
+| 操作系统 | Windows 10/11 |
+| MuMu Player 5 | [下载地址](https://www.mumuplayer.com/download/) |
+| MuMu 实例 | 建议新建一个干净实例（不要用主实例） |
+
+**不支持**雷电、夜神、蓝叠等其他模拟器。
+
+---
+
+## 工具包说明
+
+脚本会自动下载以下文件，无需手动准备：
+
+| 工具 | 来源 | 自动下载 |
+|------|------|----------|
+| LSPosed v1.9.2 | GitHub Releases | ✅ 是 |
+| Via 浏览器 | 官方 CDN | ✅ 是 |
+| HookEuicc | GitHub Releases API | ✅ 是 |
+
+以下文件因下载源有 Cloudflare 防护无法自动下载，脚本会**弹出浏览器引导你下载**：
+
+| 工具 | 下载链接 | 自动下载 |
+|------|----------|----------|
+| giffgaff APK | [mi9.com](https://mi9.com/package/com.giffgaffmobile.controller/download/) / [Uptodown](https://my-giffgaff.en.uptodown.com/android/download) | ❌ 手动 |
+| Kitsune Mask | [SourceForge](https://sourceforge.net/projects/magisk/files/Magisk%20Delta%20(Kitsune%20Mask)/) | ❌ 手动 |
+
+下载后放入工具包目录（默认 `tools/`，或脚本指定的目录）即可，脚本会自动检测。
+
+### 文件名匹配规则
+
+脚本通过通配符匹配文件名，只要文件名包含关键词即可：
+
+```
+HookEuicc*.apk          → 如 app-release-sign.apk 需改名为 HookEuicc.apk
+giffgaff*.apk           → 如 giffgaff_20.16.0.apk
+Kitsune*.apk / *Mask*.apk → 如 Magisk Delta Kitsune 27.001 Canary.apk
+LSPosed-v1.9.2-*.zip    → 自动下载
+via-release.apk         → 自动下载
 ```
 
-## 脚本会做什么
+---
 
-脚本会自动执行：
+## 脚本参数
 
-1. 检测 MuMu 5 和 `mumu-cli.exe`。
-2. 启动指定 MuMu 实例。
-3. 开启 root 权限。
-4. 开启系统盘可写。
-5. 安装 Via、giffgaff、Kitsune Mask、HookEuicc。
-6. 推送 LSPosed ZIP 到模拟器下载目录。
-7. 在 Kitsune Mask 中安装 Magisk。
-8. 开启 Zygisk。
-9. 安装 LSPosed 模块。
-10. 在 LSPosed 中启用 HookEuicc。
-11. 给 HookEuicc 勾选电话服务和 giffgaff。
-12. 打开 HookEuicc 主开关。
-13. 打开 giffgaff，并停在登录页。
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `-ToolDir` | `./tools` | 工具包目录 |
+| `-VmIndex` | 交互选择 | MuMu 实例编号 |
+| `-MuMuDir` | 自动检测 | MuMu 安装路径 |
+| `-NonInteractive` | 否 | 非交互模式（适合 Agent） |
+| `-SkipDownload` | 否 | 跳过自动下载 |
+| `-NoAcceptGiffgaffTerms` | 否 | 不自动接受 giffgaff 条款 |
 
-## 你需要手动做什么
+---
 
-脚本结束后，请你自己完成：
+## 脚本自动执行的步骤
+
+1. 检测 MuMu 5 和 `mumu-cli.exe`
+2. 列出所有 MuMu 实例，交互选择
+3. 自动下载工具包（LSPosed、Via、HookEuicc）
+4. 引导手动下载（giffgaff APK、Kitsune Mask）
+5. 启动指定 MuMu 实例
+6. 开启 root 权限和系统盘可写
+7. 安装 Via、giffgaff、Kitsune Mask、HookEuicc
+8. 在 Kitsune Mask 中安装 Magisk
+9. 开启 Zygisk
+10. 安装 LSPosed 模块
+11. 在 LSPosed 中启用 HookEuicc
+12. 给 HookEuicc 勾选电话服务和 giffgaff 作用域
+13. 打开 HookEuicc 主开关
+14. 打开 giffgaff，停在登录页
+
+## 用户需手动完成的操作
 
 - 输入 giffgaff 账号密码
 - 输入邮箱或短信验证码
@@ -112,52 +123,103 @@ powershell -ExecutionPolicy Bypass -File .\setup-giffgaff-env.ps1 -ToolDir C:\gi
 - 付款
 - 确认最终购买/提交
 
-这些步骤涉及敏感信息或真实交易，脚本不会自动处理。
+---
+
+## 配合 AI Agent 使用（详细指南）
+
+### Trae / CodeBuddy / Cursor
+
+1. 克隆仓库到本地
+2. 用 Agent 打开项目目录
+3. 对 Agent 说：
+
+```
+帮我运行 giffgaff eSIM 环境配置脚本。
+- MuMu 已安装在 D:\Program Files\Netease\MuMuPlayer\nx_main
+- 使用 VM 1 实例（新建的干净实例）
+- 工具包在 C:\giffgaff_tools 目录
+- 如果缺少 APK 文件，告诉我下载链接
+```
+
+4. Agent 会执行：
+```powershell
+powershell -ExecutionPolicy Bypass -File .\setup-giffgaff-env.ps1 -NonInteractive -VmIndex 1 -ToolDir "C:\giffgaff_tools" -MuMuDir "D:\Program Files\Netease\MuMuPlayer\nx_main"
+```
+
+5. 如果缺少文件，Agent 会告诉你下载链接，你下载放入目录后让 Agent 重新运行
+
+### 注意事项
+
+- 脚本**不会记录、读取、上传**你的账号密码或验证码
+- 脚本**不会代替你**付款、购买套餐、提交 eSIM 申请
+- 强烈建议使用**新建的干净 MuMu 实例**运行脚本
+- 脚本会修改指定实例的 root 和系统盘可写设置
+
+---
 
 ## 常见问题
 
-### 提示找不到 MuMu
+### 找不到 MuMu
 
-请先安装 MuMu 5，并确认能正常打开一次。脚本会自动搜索常见安装路径：
+脚本会自动扫描常见安装路径。如果找不到，可以：
+- 用 `-MuMuDir` 参数手动指定路径
+- 交互模式下手动输入路径
 
-- `D:\Program Files\Netease\MuMuPlayer\nx_main`
-- `C:\Program Files\Netease\MuMuPlayer\nx_main`
-- `C:\Program Files (x86)\Netease\MuMuPlayer\nx_main`
+### 缺少 -VmIndex
 
-如果你安装在其他目录，可以用：
+交互模式下会列出所有实例供选择。非交互模式必须指定 `-VmIndex`。
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\setup-giffgaff-env.ps1 -ToolDir C:\giffgaff_tools -MuMuDir "D:\Your\MuMu\nx_main"
+### 缺少 APK/ZIP
+
+脚本会自动下载 LSPosed、Via、HookEuicc。giffgaff APK 和 Kitsune Mask 需要手动下载，脚本会弹出浏览器并等待文件放入工具包目录。
+
+### giffgaff 版本旧
+
+脚本会自动点击 "UPDATE IN 60 SECONDS" 按钮跳过更新提示。
+
+### LSPosed/HookEuicc 未生效
+
+重启 MuMu 实例后重新运行脚本即可。
+
+### 日志位置
+
+`logs/setup-日期时间.log`
+
+---
+
+## 技术架构
+
+```
+start.bat                    → 双击启动器（设置 UTF-8 + Bypass 策略）
+setup-giffgaff-env.ps1       → 主脚本（交互式向导 + 自动化引擎）
+tools/                       → 工具包目录（APK 和 ZIP）
+logs/                        → 运行日志
 ```
 
-### 提示需要传入 `-VmIndex`
+### 自动化流程
 
-请先在 MuMu 多开器中新建一个干净实例，然后带上实例编号运行，例如：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\setup-giffgaff-env.ps1 -ToolDir C:\giffgaff_tools -VmIndex 1
+```
+用户双击 start.bat
+    ↓
+交互式向导：检测 MuMu → 选择实例 → 下载工具包 → 确认配置
+    ↓
+自动化引擎：启动 VM → Root → 安装 APK → Magisk → Zygisk → LSPosed → HookEuicc → giffgaff
+    ↓
+用户手动：登录 → 验证码 → 选套餐 → 付款 → 购买 eSIM
 ```
 
-这样可以避免脚本修改你日常使用的主实例。
+---
 
-### 提示缺少 APK 或 ZIP
+## License
 
-请按照“工具包下载”章节补齐文件。LSPosed 和 Via 会自动下载，其他文件需要你手动下载。
+MIT License
 
-### giffgaff 提示版本旧
+---
 
-脚本会点击 “UPDATE IN 60 SECONDS” 尝试进入流程。如果未来 giffgaff 强制更新，请重新下载最新版 giffgaff APK 后再运行脚本。
+## 致谢
 
-### LSPosed 或 HookEuicc 没生效
-
-重新运行脚本。脚本会重复检查并尽量修复已完成但未生效的步骤。
-
-### 日志在哪里
-
-日志保存在脚本目录下：
-
-```text
-logs\setup-日期时间.log
-```
-
-遇到问题时，把日志里的最后几十行发给维护者。
+- [Kitsune Mask](https://github.com/topjohnwu/Magisk) (原 Magisk Delta)
+- [LSPosed](https://github.com/LSPosed/LSPosed)
+- [HookEuicc](https://github.com/Unicorn369/HookEuicc)
+- [Via 浏览器](https://viayoo.com/)
+- [MuMu Player](https://www.mumuplayer.com/)

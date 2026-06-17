@@ -1,0 +1,6 @@
+logs/
+*.log
+tools/
+*.apk
+*.zip
+*.exe
