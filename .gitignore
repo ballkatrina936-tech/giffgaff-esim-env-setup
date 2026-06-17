@@ -1,0 +1,8 @@
+logs/
+tools/
+*.log
+*.apk
+*.exe
+*.zip
+*.mumudata
+
