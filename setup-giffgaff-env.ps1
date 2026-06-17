@@ -303,9 +303,53 @@ function Tap-RowSwitchByText {
     Write-WarnLine "Could not find row: $Label"
     return $false
   }
-  $center = Get-CenterFromBounds (Get-Attr $node "bounds")
+
+  $rowBounds = Get-Attr $node "bounds"
+  if ($rowBounds -notmatch "\[(\d+),(\d+)\]\[(\d+),(\d+)\]") {
+    Write-WarnLine "Could not parse row bounds: $Label"
+    return $false
+  }
+
+  $rowLeft = [int]$Matches[1]
+  $rowTop = [int]$Matches[2]
+  $rowRight = [int]$Matches[3]
+  $rowBottom = [int]$Matches[4]
+  $rowCenterY = [int](($rowTop + $rowBottom) / 2)
+  $rowMidX = [int](($rowLeft + $rowRight) / 2)
+
+  $switchNode = $null
+  foreach ($candidate in $xml.SelectNodes("//*")) {
+    $class = Get-Attr $candidate "class"
+    $checkable = Get-Attr $candidate "checkable"
+    $enabled = Get-Attr $candidate "enabled"
+    $bounds = Get-Attr $candidate "bounds"
+    if (-not $bounds) { continue }
+    if ($bounds -notmatch "\[(\d+),(\d+)\]\[(\d+),(\d+)\]") { continue }
+
+    $left = [int]$Matches[1]
+    $top = [int]$Matches[2]
+    $right = [int]$Matches[3]
+    $bottom = [int]$Matches[4]
+    $centerY = [int](($top + $bottom) / 2)
+
+    $sameRow = $centerY -ge $rowTop -and $centerY -le $rowBottom
+    $isSwitch = $class -match "Switch|CheckBox" -or $checkable -eq "true"
+    $isRightSide = $left -gt $rowMidX
+
+    if ($sameRow -and $isSwitch -and $isRightSide -and $enabled -ne "false") {
+      $switchNode = $candidate
+      break
+    }
+  }
+
   Write-Step "Toggle: $Label"
-  Tap-Point 790 $center[1]
+  if ($switchNode) {
+    $switchCenter = Get-CenterFromBounds (Get-Attr $switchNode "bounds")
+    Tap-Point $switchCenter[0] $switchCenter[1]
+  } else {
+    $fallbackX = [int]($rowRight - 60)
+    Tap-Point $fallbackX $rowCenterY
+  }
   return $true
 }
 
