@@ -14,7 +14,8 @@
 
 - 第一版只支持 Windows + MuMu 5。
 - 不支持雷电、夜神、蓝叠等其他模拟器。
-- 脚本会修改 MuMu 主实例的 root 和系统盘可写设置。
+- 强烈建议新建一个干净 MuMu 实例运行脚本，不要直接操作你日常使用的主实例。
+- 脚本会修改指定 MuMu 实例的 root 和系统盘可写设置。
 - 不会记录、读取、上传你的账号密码或验证码。
 - 不会代替你付款、购买套餐、提交 eSIM 申请。
 
@@ -65,19 +66,21 @@ via-release.apk 或 Via*.apk
 ## 使用方法
 
 1. 安装 MuMu 模拟器 5。
-2. 准备工具包目录，例如 `C:\giffgaff_tools`。
-3. 右键 PowerShell，选择“以管理员身份运行”。
-4. 进入脚本所在目录。
-5. 运行：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\setup-giffgaff-env.ps1 -ToolDir C:\giffgaff_tools
-```
-
-如果你想使用其他 MuMu 实例：
+2. 打开 MuMu 多开器，新建一个干净实例。
+3. 启动新实例一次，确认能进入桌面，然后关闭或保持打开都可以。
+4. 准备工具包目录，例如 `C:\giffgaff_tools`。
+5. 右键 PowerShell，选择“以管理员身份运行”。
+6. 进入脚本所在目录。
+7. 用新实例编号运行。新建的第二个实例通常是 `1`：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\setup-giffgaff-env.ps1 -ToolDir C:\giffgaff_tools -VmIndex 1
+```
+
+如果你的新实例编号不是 `1`，请把 `-VmIndex 1` 改成对应编号。主实例通常是 `0`，不建议用于第一次测试。
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\setup-giffgaff-env.ps1 -ToolDir C:\giffgaff_tools -VmIndex 2
 ```
 
 ## 脚本会做什么
@@ -127,6 +130,16 @@ powershell -ExecutionPolicy Bypass -File .\setup-giffgaff-env.ps1 -ToolDir C:\gi
 powershell -ExecutionPolicy Bypass -File .\setup-giffgaff-env.ps1 -ToolDir C:\giffgaff_tools -MuMuDir "D:\Your\MuMu\nx_main"
 ```
 
+### 提示需要传入 `-VmIndex`
+
+请先在 MuMu 多开器中新建一个干净实例，然后带上实例编号运行，例如：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\setup-giffgaff-env.ps1 -ToolDir C:\giffgaff_tools -VmIndex 1
+```
+
+这样可以避免脚本修改你日常使用的主实例。
+
 ### 提示缺少 APK 或 ZIP
 
 请按照“工具包下载”章节补齐文件。LSPosed 和 Via 会自动下载，其他文件需要你手动下载。
@@ -148,4 +161,3 @@ logs\setup-日期时间.log
 ```
 
 遇到问题时，把日志里的最后几十行发给维护者。
-

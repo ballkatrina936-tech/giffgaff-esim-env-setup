@@ -1,6 +1,6 @@
 param(
   [string]$ToolDir = (Join-Path $PSScriptRoot "tools"),
-  [int]$VmIndex = 0,
+  [int]$VmIndex = -1,
   [string]$MuMuDir = "",
   [switch]$SkipDownload,
   [switch]$NoAcceptGiffgaffTerms
@@ -481,6 +481,9 @@ function Open-GiffgaffToLogin {
 try {
   Write-Step "Starting giffgaff eSIM environment setup."
   Write-Step "ToolDir: $ToolDir"
+  if ($VmIndex -lt 0) {
+    Fail "Please create a clean MuMu instance and pass -VmIndex explicitly, for example: -VmIndex 1. This avoids modifying your main MuMu instance."
+  }
   Ensure-RequiredFiles
 
   $resolvedMuMuDir = Find-MuMuDir
