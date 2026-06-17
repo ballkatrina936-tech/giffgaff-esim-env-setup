@@ -295,19 +295,19 @@ function Scroll-Down {
   Start-Sleep -Milliseconds 900
 }
 
-function Tap-RowSwitchByText {
-  param([string]$TextPattern, [string]$Label)
-  $xml = Get-UiXml
+function Get-RowSwitchInfo {
+  param([xml]$Xml, [string]$TextPattern, [string]$Label)
+  $xml = $Xml
   $node = Find-UiNode $xml $TextPattern -IncludeContentDesc
   if (-not $node) {
     Write-WarnLine "Could not find row: $Label"
-    return $false
+    return $null
   }
 
   $rowBounds = Get-Attr $node "bounds"
   if ($rowBounds -notmatch "\[(\d+),(\d+)\]\[(\d+),(\d+)\]") {
     Write-WarnLine "Could not parse row bounds: $Label"
-    return $false
+    return $null
   }
 
   $rowLeft = [int]$Matches[1]
@@ -318,6 +318,7 @@ function Tap-RowSwitchByText {
   $rowMidX = [int](($rowLeft + $rowRight) / 2)
 
   $switchNode = $null
+  $fallbackSwitchNode = $null
   foreach ($candidate in $xml.SelectNodes("//*")) {
     $class = Get-Attr $candidate "class"
     $checkable = Get-Attr $candidate "checkable"
@@ -332,23 +333,53 @@ function Tap-RowSwitchByText {
     $bottom = [int]$Matches[4]
     $centerY = [int](($top + $bottom) / 2)
 
-    $sameRow = $centerY -ge $rowTop -and $centerY -le $rowBottom
+    $sameRow = $centerY -ge ($rowTop - 24) -and $centerY -le ($rowBottom + 24)
     $isSwitch = $class -match "Switch|CheckBox" -or $checkable -eq "true"
     $isRightSide = $left -gt $rowMidX
 
-    if ($sameRow -and $isSwitch -and $isRightSide -and $enabled -ne "false") {
-      $switchNode = $candidate
-      break
+    if ($sameRow -and $isSwitch -and $enabled -ne "false") {
+      if ($isRightSide) {
+        $switchNode = $candidate
+        break
+      }
+      if (-not $fallbackSwitchNode) {
+        $fallbackSwitchNode = $candidate
+      }
     }
+  }
+  if (-not $switchNode) { $switchNode = $fallbackSwitchNode }
+
+  return [pscustomobject]@{
+    RowRight   = $rowRight
+    RowCenterY = $rowCenterY
+    SwitchNode = $switchNode
+  }
+}
+
+function Set-RowSwitch {
+  param([string]$TextPattern, [string]$Label, [bool]$Enabled = $true)
+  $xml = Get-UiXml
+  $info = Get-RowSwitchInfo $xml $TextPattern $Label
+  if (-not $info) { return $false }
+
+  if ($info.SwitchNode) {
+    $checked = (Get-Attr $info.SwitchNode "checked") -eq "true"
+    if ($checked -eq $Enabled) {
+      $stateText = if ($Enabled) { "enabled" } else { "disabled" }
+      Write-Step "$Label is already $stateText."
+      return $true
+    }
+  } else {
+    Write-WarnLine "Could not read switch state for $Label. Tapping the row switch fallback."
   }
 
   Write-Step "Toggle: $Label"
-  if ($switchNode) {
-    $switchCenter = Get-CenterFromBounds (Get-Attr $switchNode "bounds")
+  if ($info.SwitchNode) {
+    $switchCenter = Get-CenterFromBounds (Get-Attr $info.SwitchNode "bounds")
     Tap-Point $switchCenter[0] $switchCenter[1]
   } else {
-    $fallbackX = [int]($rowRight - 60)
-    Tap-Point $fallbackX $rowCenterY
+    $fallbackX = [int]($info.RowRight - 60)
+    Tap-Point $fallbackX $info.RowCenterY
   }
   return $true
 }
@@ -432,20 +463,18 @@ function Configure-MagiskAndZygisk {
     Write-Step "Magisk binary is installed. Skipping install."
   }
 
-  if (-not (Ui-Contains "Zygisk.*\u662F")) {
-    Write-Step "Enabling Zygisk ..."
-    Tap-Ui "action_settings|\u8A2D\u5B9A|\u8BBE\u7F6E" "Kitsune settings" -IncludeContentDesc | Out-Null
-    for ($i = 0; $i -lt 6; $i++) {
-      if (Ui-Contains "Zygisk") { break }
-      Scroll-Down
-    }
-    Tap-RowSwitchByText "Zygisk" "Zygisk" | Out-Null
-    Invoke-Cmd $script:MuMuCli @("control", "--vmindex", "$VmIndex", "restart") | Out-Null
-    Wait-AndroidStarted | Out-Null
-    Ensure-Adb
-  } else {
-    Write-Step "Zygisk is already enabled."
+  Write-Step "Ensuring Zygisk is enabled ..."
+  Tap-Ui "action_settings|\u8A2D\u5B9A|\u8BBE\u7F6E" "Kitsune settings" -IncludeContentDesc | Out-Null
+  for ($i = 0; $i -lt 6; $i++) {
+    if (Ui-Contains "Zygisk") { break }
+    Scroll-Down
   }
+  if (-not (Set-RowSwitch "Zygisk" "Zygisk" $true)) {
+    Fail "Could not find the Zygisk switch in Kitsune settings."
+  }
+  Invoke-Cmd $script:MuMuCli @("control", "--vmindex", "$VmIndex", "restart") | Out-Null
+  Wait-AndroidStarted | Out-Null
+  Ensure-Adb
 }
 
 function Install-LSPosedModule {
@@ -478,16 +507,10 @@ function Configure-HookEuiccScope {
   Tap-Ui "\u6A21\u7D44|\u6A21\u5757" "LSPosed modules tab" -IncludeContentDesc | Out-Null
   Tap-Ui "HookEuicc" "HookEuicc module details" -IncludeContentDesc | Out-Null
   if (Ui-Contains "\u555F\u7528\u6A21\u7D44|\u542F\u7528\u6A21\u5757") {
-    Tap-RowSwitchByText "\u555F\u7528\u6A21\u7D44|\u542F\u7528\u6A21\u5757" "HookEuicc module switch" | Out-Null
+    Set-RowSwitch "\u555F\u7528\u6A21\u7D44|\u542F\u7528\u6A21\u5757" "HookEuicc module switch" $true | Out-Null
   }
-  $xml = Get-UiXml
-  if ($xml.OuterXml -notmatch 'com\.android\.phone(.|\n)*checked="true"') {
-    Tap-RowSwitchByText "com\.android\.phone" "Phone service scope" | Out-Null
-  }
-  $xml = Get-UiXml
-  if ($xml.OuterXml -notmatch 'com\.giffgaffmobile\.controller(.|\n)*checked="true"') {
-    Tap-RowSwitchByText "com\.giffgaffmobile\.controller|giffgaff" "giffgaff scope" | Out-Null
-  }
+  Set-RowSwitch "com\.android\.phone" "Phone service scope" $true | Out-Null
+  Set-RowSwitch "com\.giffgaffmobile\.controller|giffgaff" "giffgaff scope" $true | Out-Null
   Invoke-Cmd $script:MuMuCli @("control", "--vmindex", "$VmIndex", "restart") | Out-Null
   Wait-AndroidStarted | Out-Null
   Ensure-Adb
@@ -499,12 +522,7 @@ function Enable-HookEuiccAppSwitch {
   if (Ui-Contains "LSPosed is not activated") {
     Fail "HookEuicc still says LSPosed is not activated. Reboot MuMu and rerun the script."
   }
-  $xml = Get-UiXml
-  if ($xml.OuterXml -match 'Hook Euicc(.|\n)*checked="true"') {
-    Write-Step "HookEuicc main switch is already enabled."
-    return
-  }
-  Tap-RowSwitchByText "Hook Euicc" "HookEuicc main switch" | Out-Null
+  Set-RowSwitch "Hook Euicc" "HookEuicc main switch" $true | Out-Null
 }
 
 function Open-GiffgaffToLogin {
